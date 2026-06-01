@@ -227,7 +227,7 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
               else if (pwd !== null) alert('Incorrecta')
             }}>{isAdmin ? '✓ Admin' : 'Admin'}</button>
             {isAdmin && <button style={{ ...styles.adminBtn, fontSize: 11, background: '#dc2626' }} onClick={async () => {
-              if (!confirm('Finalizar este torneo? Esta accion no se puede deshacer.')) return
+              if (!confirm('Finalizar este torneo? Asegurate de haber cargado los premios en la tab Premios antes de continuar.')) return
               const finalMatch = matches.find(m => m.stage === 'final' && m.status === 'finished')
               let winnerName = null
               if (finalMatch) {
@@ -237,6 +237,8 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
                 winnerName = teams.find(t => t.id === winnerId)?.name ?? null
               }
               await supabase.from('tournaments').update({ status: 'finished', finished_at: new Date().toISOString(), winner_team_name: winnerName }).eq('id', tournament.id)
+              setTab('awards')
+              alert('Torneo finalizado. Revisa la tab Premios para cargar los ganadores.')
               onReset()
             }}>Finalizar torneo</button>}
           </div>
