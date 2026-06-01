@@ -84,8 +84,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }
 
   const allPlayers = players
-  const homePlayers = players.filter(p => p.team_id === match.team_home_id)
-  const awayPlayers = players.filter(p => p.team_id === match.team_away_id)
+  
 
   const styles = {
     container: { minHeight: '100vh', background: '#0f172a', color: '#fff' },

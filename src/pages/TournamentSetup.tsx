@@ -67,7 +67,7 @@ export default function TournamentSetup({ onCreated }: Props) {
   async function generateGroupFixture(tournamentId: string, activeTeams: any[]) {
     const groups = ['A', 'B']
     for (const group of groups) {
-      const groupTeams = activeTeams.filter(t => t.group === group)
+      
       // Obtener IDs reales
       const { data: savedTeams } = await supabase
         .from('teams')

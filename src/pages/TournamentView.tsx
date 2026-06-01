@@ -9,7 +9,7 @@ export default function TournamentView({ tournament, onReset }: Props) {
   const [matches, setMatches] = useState<any[]>([])
   const [teams, setTeams] = useState<any[]>([])
   const [goals, setGoals] = useState<any[]>([])
-  const [players, setPlayers] = useState<any[]>([])
+  const [_players, setPlayers] = useState<any[]>([])
   const [selectedMatch, setSelectedMatch] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const isAdmin = localStorage.getItem('tribu_admin') === 'true'
