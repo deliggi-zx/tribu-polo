@@ -5,14 +5,18 @@ type Props = { onCreated: (t: any) => void }
 
 const emptyTeam = () => ({ name: '', handicap: 0, group: 'A', players: [{ name: '', photo: null as File | null }], logo: null as File | null })
 
+const DEFAULT_AWARDS = ['Campeón', 'MBP (Mejor Jugador)', 'Goleador', 'Manta Mejor Yegua', 'Revelación']
+
 export default function TournamentSetup({ onCreated }: Props) {
   const [name, setName] = useState('Tribu Polo 2026')
   const [date, setDate] = useState('')
   const [chukkers, setChukkers] = useState(4)
   const [teamCount, setTeamCount] = useState(8)
   const [teams, setTeams] = useState(() => Array.from({ length: 8 }, (_, i) => ({ ...emptyTeam(), group: i < 4 ? 'A' : 'B' })))
+  const [awards, setAwards] = useState<string[]>(DEFAULT_AWARDS)
+  const [newAward, setNewAward] = useState('')
   const [saving, setSaving] = useState(false)
-  const [step, setStep] = useState<'config' | 'teams'>('config')
+  const [step, setStep] = useState<'config' | 'teams' | 'awards'>('config')
 
   function updateTeam(i: number, field: string, value: any) {
     setTeams(prev => prev.map((t, idx) => idx === i ? { ...t, [field]: value } : t))
@@ -27,6 +31,16 @@ export default function TournamentSetup({ onCreated }: Props) {
 
   function addPlayer(teamIdx: number) {
     setTeams(prev => prev.map((t, i) => i === teamIdx ? { ...t, players: [...t.players, { name: '', photo: null }] } : t))
+  }
+
+  function addAward() {
+    if (!newAward.trim()) return
+    setAwards(prev => [...prev, newAward.trim()])
+    setNewAward('')
+  }
+
+  function removeAward(i: number) {
+    setAwards(prev => prev.filter((_, idx) => idx !== i))
   }
 
   async function uploadImage(file: File, path: string): Promise<string | null> {
@@ -44,6 +58,13 @@ export default function TournamentSetup({ onCreated }: Props) {
         .from('tournaments')
         .insert({ name, date, chukkers_per_match: chukkers, status: 'setup' })
         .select().single()
+
+      // Guardar premios
+      if (awards.length > 0) {
+        await supabase.from('award_types').insert(
+          awards.map((a, i) => ({ tournament_id: tournament.id, name: a, order_index: i }))
+        )
+      }
 
       const activeTeams = teams.slice(0, teamCount)
       for (const team of activeTeams) {
@@ -132,6 +153,17 @@ export default function TournamentSetup({ onCreated }: Props) {
       <h1 style={styles.title}>TRIBU POLO</h1>
       <p style={styles.sub}>Configuración del torneo</p>
 
+      {/* Stepper */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
+        {(['config', 'teams', 'awards'] as const).map((s, i) => (
+          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: step === s ? '#C9A84C' : '#8B1A3A', color: step === s ? '#4A0B1E' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>{i + 1}</div>
+            <span style={{ fontSize: 12, color: step === s ? '#C9A84C' : '#d4a0b0' }}>{s === 'config' ? 'Config' : s === 'teams' ? 'Equipos' : 'Premios'}</span>
+            {i < 2 && <span style={{ color: '#8B1A3A' }}>→</span>}
+          </div>
+        ))}
+      </div>
+
       {step === 'config' && (
         <div style={styles.card}>
           <label style={styles.label}>Nombre del torneo</label>
@@ -166,7 +198,6 @@ export default function TournamentSetup({ onCreated }: Props) {
                 <span style={{ color: '#d4a0b0', fontSize: 13 }}>Equipo {i + 1}</span>
               </div>
 
-              {/* Logo del equipo */}
               <div style={{ ...styles.row, marginBottom: 8 }}>
                 <Avatar url={team.logo ? URL.createObjectURL(team.logo) : null} name={team.name || '?'} size={48} />
                 <div style={{ flex: 1 }}>
@@ -193,6 +224,34 @@ export default function TournamentSetup({ onCreated }: Props) {
           ))}
           <div style={{ display: 'flex', gap: 12 }}>
             <button style={{ ...styles.btn, background: '#8B1A3A', color: '#fff' }} onClick={() => setStep('config')}>← Volver</button>
+            <button style={styles.btn} onClick={() => setStep('awards')}>Siguiente → Premios</button>
+          </div>
+        </div>
+      )}
+
+      {step === 'awards' && (
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <div style={styles.teamCard}>
+            <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Premios del torneo</p>
+            <p style={{ color: '#d4a0b0', fontSize: 12, marginBottom: 16 }}>Definí qué premios se van a entregar. Al finalizar el torneo podrás cargar foto y ganador de cada uno.</p>
+
+            {awards.map((award, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div style={{ flex: 1, background: '#6B0F2B', border: '1px solid #8B1A3A', borderRadius: 8, padding: '10px 12px', color: '#fff', fontSize: 14 }}>
+                  🏆 {award}
+                </div>
+                <button onClick={() => removeAward(i)} style={{ background: 'none', border: 'none', color: '#d4a0b0', cursor: 'pointer', fontSize: 18, padding: '4px 8px' }}>✕</button>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <input style={{ ...styles.input, flex: 1 }} placeholder="Nuevo premio..." value={newAward} onChange={e => setNewAward(e.target.value)} onKeyDown={e => e.key === 'Enter' && addAward()} />
+              <button onClick={addAward} style={{ background: '#8B1A3A', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontWeight: 700 }}>+</button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button style={{ ...styles.btn, background: '#8B1A3A', color: '#fff' }} onClick={() => setStep('teams')}>← Volver</button>
             <button style={styles.btn} onClick={handleCreate} disabled={saving}>
               {saving ? 'Creando...' : '🏆 Crear torneo'}
             </button>
