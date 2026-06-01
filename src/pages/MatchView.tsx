@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { QRCodeSVG } from 'qrcode.react'
 
+function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; size?: number }) {
+  if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: '#8B1A3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 700, color: '#C9A84C', flexShrink: 0 }}>
+      {name.charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
 type Props = { match: any; tournament: any; onBack: () => void; isAdmin: boolean }
 
 export default function MatchView({ match, tournament, onBack, isAdmin }: Props) {
@@ -177,9 +186,10 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             <div style={{ flex: 1 }}>
               <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' }}>{match.team_home?.name}</p>
               {players.filter(p => p.team_id === match.team_home_id).map(player => (
-                <button key={player.id} style={styles.playerBtn(false)} onClick={() => addGoal(player.id, match.team_home_id)} disabled={saving}>
-                   {player.name}
-                </button>
+                <button key={player.id} style={{ ...styles.playerBtn(false), display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => addGoal(player.id, match.team_home_id)} disabled={saving}>
+  <Avatar url={player.photo_url} name={player.name} size={28} />
+  <span>{player.name}</span>
+</button>
               ))}
             </div>
             <div style={{ width: 1, background: '#8B1A3A' }} />
@@ -230,9 +240,11 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
               <>
                 <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Votá al jugador destacado del partido:</p>
                 {allPlayers.map(player => (
-                  <button key={player.id} style={styles.playerBtn(false)} onClick={() => votePlayer(player.id)}>
-                    ⭐ {player.name} <span style={{ color: '#94a3b8', fontSize: 12 }}>({getMvpVoteCount(player.id)} votos)</span>
-                  </button>
+                  <button key={player.id} style={{ ...styles.playerBtn(false), display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => votePlayer(player.id)}>
+  <Avatar url={player.photo_url} name={player.name} size={28} />
+  <span>⭐ {player.name}</span>
+  <span style={{ color: '#d4a0b0', fontSize: 12, marginLeft: 'auto' }}>({getMvpVoteCount(player.id)} votos)</span>
+</button>
                 ))}
               </>
             ) : (
