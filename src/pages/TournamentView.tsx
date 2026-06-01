@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import MatchView from './MatchView'
+import AwardsView from './AwardsView'
 
 type Props = { tournament: any; onReset: () => void; initialMatchId?: string | null }
 
@@ -14,7 +15,7 @@ function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; s
 }
 
 export default function TournamentView({ tournament, onReset, initialMatchId }: Props) {
-  const [tab, setTab] = useState<'fixture' | 'standings' | 'stats' | 'teams'>('fixture')
+  const [tab, setTab] = useState<'fixture' | 'standings' | 'stats' | 'teams' | 'awards'>('fixture')
   const [matches, setMatches] = useState<any[]>([])
   const [teams, setTeams] = useState<any[]>([])
   const [goals, setGoals] = useState<any[]>([])
@@ -231,11 +232,11 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
       </div>
 
       <div style={styles.tabs}>
-        {(['fixture', 'standings', 'stats', 'teams'] as const).map(t => (
-          <button key={t} style={styles.tab(tab === t)} onClick={() => setTab(t)}>
-            {t === 'fixture' ? 'Fixture' : t === 'standings' ? 'Posiciones' : t === 'stats' ? 'Estadísticas' : 'Equipos'}
-          </button>
-        ))}
+        {(['fixture', 'standings', 'stats', 'teams', 'awards'] as const).map(t => (
+  <button key={t} style={styles.tab(tab === t)} onClick={() => setTab(t)}>
+    {t === 'fixture' ? 'Fixture' : t === 'standings' ? 'Posiciones' : t === 'stats' ? 'Stats' : t === 'teams' ? 'Equipos' : '🏆'}
+  </button>
+))}
       </div>
 
       <div style={styles.content}>
@@ -416,6 +417,8 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
                 )
               })}
             </>
+          ) : (
+            <AwardsView tournament={tournament} isAdmin={isAdmin} />
           )
         )}
       </div>
