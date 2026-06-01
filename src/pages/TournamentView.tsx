@@ -143,7 +143,7 @@ export default function TournamentView({ tournament, onReset }: Props) {
                     <div key={match.id} style={styles.matchCard} onClick={() => isAdmin || match.status !== 'pending' ? setSelectedMatch(match) : null}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={styles.stageBadge('group')}>Grupo {group}</span>
-                        <span style={styles.statusBadge(match.status)}>{match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}</span>
+                        <span style={styles.statusBadge(match.status)}>{match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? `🔴 Ch.${match.chukker_current}` : 'Pendiente'}</span>
                       </div>
                       <div style={styles.scoreRow}>
                         <span style={styles.teamName}>{match.team_home?.name}</span>

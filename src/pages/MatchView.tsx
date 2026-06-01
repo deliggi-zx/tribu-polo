@@ -12,7 +12,14 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const [chukker, setChukker] = useState(match.chukker_current ?? 1)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const deviceId = localStorage.getItem('device_id') ?? (() => { const id = Math.random().toString(36).slice(2); localStorage.setItem('device_id', id); return id })()
+  const deviceId = (() => {
+    let id = localStorage.getItem('tribu_device_id')
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+      localStorage.setItem('tribu_device_id', id)
+    }
+    return id
+  })()
 
   useEffect(() => {
     loadData()
@@ -49,9 +56,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   async function addGoal(playerId: string, teamId: string) {
     setSaving(true)
     await supabase.from('goals').insert({ match_id: match.id, player_id: playerId, team_id: teamId, chukker })
-    if (match.status === 'pending') {
-      await supabase.from('matches').update({ status: 'live', chukker_current: chukker }).eq('id', match.id)
-    }
+    await supabase.from('matches').update({ status: 'live', chukker_current: chukker }).eq('id', match.id)
     await loadData()
     setSaving(false)
   }
@@ -84,7 +89,8 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }
 
   const allPlayers = players
-  
+  const homePlayers = players.filter(p => p.team_id === match.team_home_id)
+  const awayPlayers = players.filter(p => p.team_id === match.team_away_id)
 
   const styles = {
     container: { minHeight: '100vh', background: '#0f172a', color: '#fff' },
