@@ -115,7 +115,7 @@ export default function AwardsView({ tournament, isAdmin }: Props) {
           🏆 Premios {completedAwards > 0 && `(${completedAwards}/${totalAwards})`}
         </button>
         <button style={styles.innerTab(innerTab === 'gallery')} onClick={() => setInnerTab('gallery')}>
-          📷 Galería {gallery.length > 0 && `(${gallery.length})`}
+          📷 Grandes momentos {gallery.length > 0 && `(${gallery.length})`}
         </button>
       </div>
 
