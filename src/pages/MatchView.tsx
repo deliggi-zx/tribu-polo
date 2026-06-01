@@ -153,21 +153,23 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       {/* Marcador */}
       <div style={styles.scoreboard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: 1, textAlign: 'right' as const }}>
-            <p style={styles.teamName}>{match.team_home?.name}</p>
-            <p style={{ color: '#94a3b8', fontSize: 12 }}>H: {match.team_home?.handicap ?? 0}</p>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <Avatar url={match.team_home?.logo_url} name={match.team_home?.name ?? '?'} size={40} />
+            <p style={{ ...styles.teamName, textAlign: 'right' as const, margin: 0 }}>{match.team_home?.name}</p>
+            <p style={{ color: '#d4a0b0', fontSize: 12, margin: 0 }}>H: {match.team_home?.handicap ?? 0}</p>
           </div>
           <div style={{ padding: '0 20px' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={styles.score}>{homeGoals}</span>
-              <span style={{ color: '#334155', fontSize: 32 }}>-</span>
+              <span style={{ color: '#8B1A3A', fontSize: 32 }}>-</span>
               <span style={styles.score}>{awayGoals}</span>
             </div>
             {match.status === 'live' && <div style={styles.chukkerBadge}>Chukker {chukker}</div>}
           </div>
-          <div style={{ flex: 1, textAlign: 'left' as const }}>
-            <p style={styles.teamName}>{match.team_away?.name}</p>
-            <p style={{ color: '#94a3b8', fontSize: 12 }}>H: {match.team_away?.handicap ?? 0}</p>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            <Avatar url={match.team_away?.logo_url} name={match.team_away?.name ?? '?'} size={40} />
+            <p style={{ ...styles.teamName, margin: 0 }}>{match.team_away?.name}</p>
+            <p style={{ color: '#d4a0b0', fontSize: 12, margin: 0 }}>H: {match.team_away?.handicap ?? 0}</p>
           </div>
         </div>
       </div>
