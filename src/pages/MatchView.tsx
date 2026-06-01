@@ -39,7 +39,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
     const [g, p, v, m] = await Promise.all([
       supabase.from('goals').select('*, player:players(*)').eq('match_id', match.id).order('created_at'),
       supabase.from('players').select('*').in('team_id', [match.team_home_id, match.team_away_id]),
-      supabase.from('mvp_votes').select('*, player:players(*)').eq('match_id', match.id),
+      supabase.from('mvp_votes').select('id, player_id, device_id, player:players(*)').eq('match_id', match.id),
       supabase.from('mvp_official').select('*, player:players(*)').eq('match_id', match.id).single(),
     ])
     setGoals(g.data ?? [])
@@ -51,7 +51,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
 
   const homeGoals = goals.filter(g => g.team_id === match.team_home_id).length
   const awayGoals = goals.filter(g => g.team_id === match.team_away_id).length
-  const hasVoted = mvpVotes.some(v => v.device_id === deviceId)
+  const hasVoted = mvpVotes.some(v => v.device_id === deviceId) || localStorage.getItem(`voted_match_${match.id}`) === 'true'
 
   async function addGoal(playerId: string, teamId: string) {
     setSaving(true)
@@ -74,10 +74,11 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }
 
   async function votePlayer(playerId: string) {
-    if (hasVoted) return
-    await supabase.from('mvp_votes').insert({ match_id: match.id, player_id: playerId, device_id: deviceId })
-    await loadData()
-  }
+  if (hasVoted) return
+  await supabase.from('mvp_votes').insert({ match_id: match.id, player_id: playerId, device_id: deviceId })
+  localStorage.setItem(`voted_match_${match.id}`, 'true')
+  await loadData()
+}
 
   async function setOfficialMvp(playerId: string) {
     await supabase.from('mvp_official').upsert({ match_id: match.id, player_id: playerId })
