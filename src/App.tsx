@@ -63,7 +63,7 @@ export default function App() {
           {history.length === 0 ? (
             <p style={{ color: '#d4a0b0', textAlign: 'center', marginTop: 40 }}>No hay torneos finalizados.</p>
           ) : history.map(t => (
-            <div key={t.id} style={{ ...styles.card, cursor: 'pointer' }} onClick={() => setTournament(t)}>
+            <div key={t.id} style={{ ...styles.card, cursor: 'pointer' }} onClick={() => { setTournament(t); setScreen('main') }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <p style={{ fontWeight: 700, fontSize: 16, margin: '0 0 4px', color: '#fff' }}>{t.name}</p>
