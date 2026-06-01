@@ -94,19 +94,19 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const allPlayers = players
 
   const styles = {
-    container: { minHeight: '100vh', background: '#0f172a', color: '#fff' },
-    header: { background: '#1e293b', padding: '16px', borderBottom: '1px solid #334155' },
-    backBtn: { background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 15, marginBottom: 12, padding: 0 },
-    scoreboard: { background: '#0f172a', borderRadius: 16, padding: 20, margin: 16, border: '1px solid #334155', textAlign: 'center' as const },
-    score: { fontSize: 56, fontWeight: 800, color: '#f8d000' },
+    container: { minHeight: '100vh', background: '#6B0F2B', color: '#fff' },
+    header: { background: '#4A0B1E', padding: '16px', borderBottom: '1px solid #8B1A3A' },
+    backBtn: { background: 'none', border: 'none', color: '#d4a0b0', cursor: 'pointer', fontSize: 15, marginBottom: 12, padding: 0 },
+    scoreboard: { background: '#4A0B1E', borderRadius: 16, padding: 20, margin: 16, border: '1px solid #8B1A3A', textAlign: 'center' as const },
+    score: { fontSize: 56, fontWeight: 800, color: '#C9A84C' },
     teamName: { fontSize: 16, fontWeight: 600, color: '#fff' },
     chukkerBadge: { display: 'inline-block', background: '#dc2626', color: '#fff', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700, marginTop: 8 },
     section: { padding: '0 16px 16px' },
-    sectionTitle: { color: '#94a3b8', fontSize: 12, fontWeight: 700, letterSpacing: 1, marginBottom: 12, marginTop: 16 },
-    btn: (color: string) => ({ background: color, color: color === '#f8d000' ? '#0f172a' : '#fff', border: 'none', borderRadius: 10, padding: '12px 16px', cursor: 'pointer', fontWeight: 700, fontSize: 14, flex: 1 }),
-    playerBtn: (active: boolean) => ({ background: active ? '#1e40af' : '#1e293b', border: active ? '1px solid #3b82f6' : '1px solid #334155', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', color: '#fff', fontSize: 14, textAlign: 'left' as const, width: '100%', marginBottom: 6 }),
-    goalRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #1e293b' },
-    input: { background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: '8px 12px', color: '#fff', fontSize: 15, width: 60, textAlign: 'center' as const },
+    sectionTitle: { color: '#d4a0b0', fontSize: 12, fontWeight: 700, letterSpacing: 1, marginBottom: 12, marginTop: 16 },
+    btn: (color: string) => ({ background: color, color: color === '#C9A84C' ? '#4A0B1E' : '#fff', border: 'none', borderRadius: 10, padding: '12px 16px', cursor: 'pointer', fontWeight: 700, fontSize: 14, flex: 1 }),
+    playerBtn: (active: boolean) => ({ background: active ? '#8B1A3A' : '#4A0B1E', border: active ? '1px solid #C9A84C' : '1px solid #8B1A3A', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', color: '#fff', fontSize: 14, textAlign: 'left' as const, width: '100%', marginBottom: 6 }),
+    goalRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #5A1525' },
+    input: { background: '#4A0B1E', border: '1px solid #8B1A3A', borderRadius: 8, padding: '8px 12px', color: '#fff', fontSize: 15, width: 60, textAlign: 'center' as const },
   }
 
   if (loading) return <div style={{ ...styles.container, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p style={{ color: '#fff' }}>Cargando...</p></div>

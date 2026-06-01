@@ -84,22 +84,22 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
   }
 
   const styles = {
-    container: { minHeight: '100vh', background: '#0f172a', color: '#fff' },
-    header: { background: '#1e293b', padding: '20px 16px', borderBottom: '1px solid #334155' },
-    title: { fontSize: 22, fontWeight: 800, color: '#f8d000', margin: 0 },
-    sub: { color: '#94a3b8', fontSize: 13, marginTop: 4 },
-    tabs: { display: 'flex', background: '#1e293b', borderBottom: '1px solid #334155' },
-    tab: (active: boolean) => ({ flex: 1, padding: '12px 8px', textAlign: 'center' as const, cursor: 'pointer', fontWeight: 600, fontSize: 13, color: active ? '#f8d000' : '#94a3b8', borderBottom: active ? '2px solid #f8d000' : '2px solid transparent', background: 'none', border: 'none', borderBottomStyle: 'solid' as const, borderBottomWidth: active ? 2 : 0, borderBottomColor: active ? '#f8d000' : 'transparent' }),
+    container: { minHeight: '100vh', background: '#6B0F2B', color: '#fff' },
+    header: { background: '#4A0B1E', padding: '20px 16px', borderBottom: '1px solid #8B1A3A' },
+    title: { fontSize: 22, fontWeight: 800, color: '#C9A84C', margin: 0 },
+    sub: { color: '#d4a0b0', fontSize: 13, marginTop: 4 },
+    tabs: { display: 'flex', background: '#4A0B1E', borderBottom: '1px solid #8B1A3A' },
+    tab: (active: boolean) => ({ flex: 1, padding: '12px 8px', textAlign: 'center' as const, cursor: 'pointer', fontWeight: 600, fontSize: 13, color: active ? '#C9A84C' : '#d4a0b0', borderBottom: active ? '2px solid #C9A84C' : '2px solid transparent', background: 'none', border: 'none', borderBottomStyle: 'solid' as const, borderBottomWidth: active ? 2 : 0, borderBottomColor: active ? '#C9A84C' : 'transparent' }),
     content: { padding: 16, maxWidth: 600, margin: '0 auto' },
-    matchCard: { background: '#1e293b', borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer' },
+    matchCard: { background: '#4A0B1E', borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer', border: '1px solid #8B1A3A' },
     stageBadge: (stage: string) => ({ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: stage === 'group' ? '#1e40af' : stage === 'semi' ? '#7e22ce' : '#b45309', color: '#fff', marginBottom: 8 }),
     scoreRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     teamName: { flex: 1, fontSize: 15, fontWeight: 600 },
-    score: { fontSize: 28, fontWeight: 800, color: '#f8d000', minWidth: 40, textAlign: 'center' as const },
-    statusBadge: (s: string) => ({ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: s === 'finished' ? '#166534' : s === 'live' ? '#dc2626' : '#334155', color: '#fff' }),
-    tableHeader: { display: 'flex', color: '#94a3b8', fontSize: 12, padding: '8px 12px', borderBottom: '1px solid #334155' },
-    tableRow: { display: 'flex', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid #1e293b' },
-    adminBtn: { background: '#334155', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 },
+    score: { fontSize: 28, fontWeight: 800, color: '#C9A84C', minWidth: 40, textAlign: 'center' as const },
+    statusBadge: (s: string) => ({ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: s === 'finished' ? '#166534' : s === 'live' ? '#dc2626' : '#5A1525', color: '#fff' }),
+    tableHeader: { display: 'flex', color: '#d4a0b0', fontSize: 12, padding: '8px 12px', borderBottom: '1px solid #8B1A3A' },
+    tableRow: { display: 'flex', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid #5A1525' },
+    adminBtn: { background: '#8B1A3A', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13 },
   }
 
   if (selectedMatch) {
@@ -113,9 +113,12 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={styles.title}>🐴 {tournament.name}</h1>
-            <p style={styles.sub}>{new Date(tournament.date).toLocaleDateString('es-AR')} · {tournament.chukkers_per_match} chukkers</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src="/logo.jpg" alt="Logo" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+            <div>
+              <h1 style={styles.title}>{tournament.name}</h1>
+              <p style={styles.sub}>{new Date(tournament.date).toLocaleDateString('es-AR')} · {tournament.chukkers_per_match} chukkers</p>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-end' }}>
             <button style={styles.adminBtn} onClick={() => {
