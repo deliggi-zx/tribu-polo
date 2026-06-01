@@ -174,20 +174,25 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             <input style={styles.input} type="number" min={1} max={tournament.chukkers_per_match} value={chukker} onChange={e => setChukker(Number(e.target.value))} />
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <button style={{ ...styles.btn('#1e40af'), background: selectedTeam === match.team_home_id ? '#1e40af' : '#1e293b' }} onClick={() => setSelectedTeam(match.team_home_id)}>
-              {match.team_home?.name}
-            </button>
-            <button style={{ ...styles.btn('#7e22ce'), background: selectedTeam === match.team_away_id ? '#7e22ce' : '#1e293b' }} onClick={() => setSelectedTeam(match.team_away_id)}>
-              {match.team_away?.name}
-            </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' }}>{match.team_home?.name}</p>
+              {players.filter(p => p.team_id === match.team_home_id).map(player => (
+                <button key={player.id} style={styles.playerBtn(false)} onClick={() => addGoal(player.id, match.team_home_id)} disabled={saving}>
+                   {player.name}
+                </button>
+              ))}
+            </div>
+            <div style={{ width: 1, background: '#8B1A3A' }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' }}>{match.team_away?.name}</p>
+              {players.filter(p => p.team_id === match.team_away_id).map(player => (
+                <button key={player.id} style={styles.playerBtn(false)} onClick={() => addGoal(player.id, match.team_away_id)} disabled={saving}>
+                   {player.name}
+                </button>
+              ))}
+            </div>
           </div>
-
-          {players.filter(p => p.team_id === selectedTeam).map(player => (
-            <button key={player.id} style={styles.playerBtn(false)} onClick={() => addGoal(player.id, selectedTeam)} disabled={saving}>
-              ⚽ {player.name}
-            </button>
-          ))}
 
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             {goals.length > 0 && (
