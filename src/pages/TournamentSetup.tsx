@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 type Props = { onCreated: (t: any) => void }
 
-const emptyTeam = () => ({ name: '', handicap: 0, group: 'A', players: ['', '', '', ''] })
+const emptyTeam = () => ({ name: '', handicap: 0, group: 'A', players: [{ name: '', photo: null as File | null }], logo: null as File | null })
 
 export default function TournamentSetup({ onCreated }: Props) {
   const [name, setName] = useState('Tribu Polo 2026')
@@ -18,15 +18,22 @@ export default function TournamentSetup({ onCreated }: Props) {
     setTeams(prev => prev.map((t, idx) => idx === i ? { ...t, [field]: value } : t))
   }
 
-  function updatePlayer(teamIdx: number, playerIdx: number, value: string) {
+  function updatePlayer(teamIdx: number, playerIdx: number, field: string, value: any) {
     setTeams(prev => prev.map((t, i) => i === teamIdx
-      ? { ...t, players: t.players.map((p, j) => j === playerIdx ? value : p) }
+      ? { ...t, players: t.players.map((p, j) => j === playerIdx ? { ...p, [field]: value } : p) }
       : t
     ))
   }
 
   function addPlayer(teamIdx: number) {
-    setTeams(prev => prev.map((t, i) => i === teamIdx ? { ...t, players: [...t.players, ''] } : t))
+    setTeams(prev => prev.map((t, i) => i === teamIdx ? { ...t, players: [...t.players, { name: '', photo: null }] } : t))
+  }
+
+  async function uploadImage(file: File, path: string): Promise<string | null> {
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (error) return null
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    return data.publicUrl
   }
 
   async function handleCreate() {
@@ -40,20 +47,26 @@ export default function TournamentSetup({ onCreated }: Props) {
 
       const activeTeams = teams.slice(0, teamCount)
       for (const team of activeTeams) {
+        let logoUrl = null
+        if (team.logo) {
+          logoUrl = await uploadImage(team.logo, `logos/${tournament.id}_${team.name}.jpg`)
+        }
+
         const { data: savedTeam } = await supabase
           .from('teams')
-          .insert({ tournament_id: tournament.id, name: team.name, handicap: team.handicap, group_name: team.group })
+          .insert({ tournament_id: tournament.id, name: team.name, handicap: team.handicap, group_name: team.group, logo_url: logoUrl })
           .select().single()
 
-        const validPlayers = team.players.filter(p => p.trim())
-        if (validPlayers.length > 0) {
-          await supabase.from('players').insert(
-            validPlayers.map(p => ({ team_id: savedTeam.id, name: p }))
-          )
+        const validPlayers = team.players.filter(p => p.name.trim())
+        for (const player of validPlayers) {
+          let photoUrl = null
+          if (player.photo) {
+            photoUrl = await uploadImage(player.photo, `players/${savedTeam.id}_${player.name}.jpg`)
+          }
+          await supabase.from('players').insert({ team_id: savedTeam.id, name: player.name, photo_url: photoUrl })
         }
       }
 
-      // Generar fixture fase de grupos
       await generateGroupFixture(tournament.id, activeTeams)
       onCreated(tournament)
     } catch (e) {
@@ -67,8 +80,6 @@ export default function TournamentSetup({ onCreated }: Props) {
   async function generateGroupFixture(tournamentId: string, _activeTeams: any[]) {
     const groups = ['A', 'B']
     for (const group of groups) {
-      
-      // Obtener IDs reales
       const { data: savedTeams } = await supabase
         .from('teams')
         .select('id, name, group_name')
@@ -76,7 +87,6 @@ export default function TournamentSetup({ onCreated }: Props) {
         .eq('group_name', group)
 
       if (!savedTeams) continue
-      // Todos contra todos dentro del grupo
       for (let i = 0; i < savedTeams.length; i++) {
         for (let j = i + 1; j < savedTeams.length; j++) {
           await supabase.from('matches').insert({
@@ -93,21 +103,33 @@ export default function TournamentSetup({ onCreated }: Props) {
   }
 
   const styles = {
-    container: { minHeight: '100vh', background: '#0f172a', color: '#fff', padding: '24px 16px' },
-    title: { fontSize: 28, fontWeight: 800, color: '#f8d000', textAlign: 'center' as const, marginBottom: 8 },
-    sub: { textAlign: 'center' as const, color: '#94a3b8', marginBottom: 32 },
-    card: { background: '#1e293b', borderRadius: 16, padding: 24, marginBottom: 16, maxWidth: 600, margin: '0 auto 16px' },
-    label: { fontSize: 13, color: '#94a3b8', marginBottom: 6, display: 'block' },
-    input: { width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, padding: '10px 12px', color: '#fff', fontSize: 15, boxSizing: 'border-box' as const },
-    btn: { background: '#f8d000', color: '#0f172a', fontWeight: 700, fontSize: 16, border: 'none', borderRadius: 10, padding: '14px 24px', cursor: 'pointer', width: '100%', marginTop: 16 },
-    btnSm: { background: '#334155', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 13, marginTop: 8 },
-    teamCard: { background: '#0f172a', borderRadius: 12, padding: 16, marginBottom: 12 },
+    container: { minHeight: '100vh', background: '#6B0F2B', color: '#fff', padding: '24px 16px' },
+    title: { fontSize: 28, fontWeight: 800, color: '#C9A84C', textAlign: 'center' as const, marginBottom: 8 },
+    sub: { textAlign: 'center' as const, color: '#d4a0b0', marginBottom: 32 },
+    card: { background: '#4A0B1E', borderRadius: 16, padding: 24, marginBottom: 16, maxWidth: 600, margin: '0 auto 16px' },
+    label: { fontSize: 13, color: '#d4a0b0', marginBottom: 6, display: 'block' },
+    input: { width: '100%', background: '#6B0F2B', border: '1px solid #8B1A3A', borderRadius: 8, padding: '10px 12px', color: '#fff', fontSize: 15, boxSizing: 'border-box' as const },
+    btn: { background: '#C9A84C', color: '#4A0B1E', fontWeight: 700, fontSize: 16, border: 'none', borderRadius: 10, padding: '14px 24px', cursor: 'pointer', width: '100%', marginTop: 16 },
+    btnSm: { background: '#8B1A3A', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 13, marginTop: 8 },
+    teamCard: { background: '#4A0B1E', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #8B1A3A' },
     row: { display: 'flex', gap: 12, alignItems: 'center' },
+  }
+
+  function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; size?: number }) {
+    if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }} />
+    return (
+      <div style={{ width: size, height: size, borderRadius: '50%', background: '#8B1A3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 700, color: '#C9A84C', flexShrink: 0 }}>
+        {name.charAt(0).toUpperCase()}
+      </div>
+    )
   }
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>🐴 TRIBU POLO</h1>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+        <img src="/logo.jpg" alt="Tribu de Polo" style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover' }} />
+      </div>
+      <h1 style={styles.title}>TRIBU POLO</h1>
       <p style={styles.sub}>Configuración del torneo</p>
 
       {step === 'config' && (
@@ -125,7 +147,7 @@ export default function TournamentSetup({ onCreated }: Props) {
           <div style={styles.row}>
             {[4, 8].map(n => (
               <button key={n} onClick={() => { setTeamCount(n); setTeams(Array.from({ length: n }, (_, i) => ({ ...emptyTeam(), group: i < n / 2 ? 'A' : 'B' }))) }}
-                style={{ ...styles.btnSm, background: teamCount === n ? '#f8d000' : '#334155', color: teamCount === n ? '#0f172a' : '#fff', flex: 1 }}>
+                style={{ ...styles.btnSm, background: teamCount === n ? '#C9A84C' : '#8B1A3A', color: teamCount === n ? '#4A0B1E' : '#fff', flex: 1 }}>
                 {n} equipos
               </button>
             ))}
@@ -140,20 +162,37 @@ export default function TournamentSetup({ onCreated }: Props) {
           {teams.slice(0, teamCount).map((team, i) => (
             <div key={i} style={styles.teamCard}>
               <div style={{ ...styles.row, marginBottom: 12 }}>
-                <span style={{ color: '#f8d000', fontWeight: 700, fontSize: 13 }}>GRUPO {team.group}</span>
-                <span style={{ color: '#94a3b8', fontSize: 13 }}>Equipo {i + 1}</span>
+                <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13 }}>GRUPO {team.group}</span>
+                <span style={{ color: '#d4a0b0', fontSize: 13 }}>Equipo {i + 1}</span>
               </div>
-              <input style={{ ...styles.input, marginBottom: 8 }} placeholder="Nombre del equipo" value={team.name} onChange={e => updateTeam(i, 'name', e.target.value)} />
+
+              {/* Logo del equipo */}
+              <div style={{ ...styles.row, marginBottom: 8 }}>
+                <Avatar url={team.logo ? URL.createObjectURL(team.logo) : null} name={team.name || '?'} size={48} />
+                <div style={{ flex: 1 }}>
+                  <input style={{ ...styles.input, marginBottom: 8 }} placeholder="Nombre del equipo" value={team.name} onChange={e => updateTeam(i, 'name', e.target.value)} />
+                </div>
+              </div>
+              <label style={{ ...styles.label, fontSize: 11 }}>Logo del equipo (opcional)</label>
+              <input type="file" accept="image/*" style={{ color: '#d4a0b0', fontSize: 12, marginBottom: 8 }} onChange={e => updateTeam(i, 'logo', e.target.files?.[0] ?? null)} />
+
               <input style={styles.input} type="number" placeholder="Handicap del equipo" value={team.handicap} onChange={e => updateTeam(i, 'handicap', Number(e.target.value))} />
-              <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 12, marginBottom: 8 }}>Jugadores:</p>
+
+              <p style={{ color: '#d4a0b0', fontSize: 12, marginTop: 12, marginBottom: 8 }}>Jugadores:</p>
               {team.players.map((player, j) => (
-                <input key={j} style={{ ...styles.input, marginBottom: 6 }} placeholder={`Jugador ${j + 1}`} value={player} onChange={e => updatePlayer(i, j, e.target.value)} />
+                <div key={j} style={{ ...styles.row, marginBottom: 8, alignItems: 'center' }}>
+                  <Avatar url={player.photo ? URL.createObjectURL(player.photo) : null} name={player.name || '?'} size={36} />
+                  <div style={{ flex: 1 }}>
+                    <input style={{ ...styles.input, marginBottom: 4 }} placeholder={`Jugador ${j + 1}`} value={player.name} onChange={e => updatePlayer(i, j, 'name', e.target.value)} />
+                    <input type="file" accept="image/*" style={{ color: '#d4a0b0', fontSize: 11 }} onChange={e => updatePlayer(i, j, 'photo', e.target.files?.[0] ?? null)} />
+                  </div>
+                </div>
               ))}
               <button style={styles.btnSm} onClick={() => addPlayer(i)}>+ Agregar jugador</button>
             </div>
           ))}
           <div style={{ display: 'flex', gap: 12 }}>
-            <button style={{ ...styles.btn, background: '#334155', color: '#fff' }} onClick={() => setStep('config')}>← Volver</button>
+            <button style={{ ...styles.btn, background: '#8B1A3A', color: '#fff' }} onClick={() => setStep('config')}>← Volver</button>
             <button style={styles.btn} onClick={handleCreate} disabled={saving}>
               {saving ? 'Creando...' : '🏆 Crear torneo'}
             </button>
