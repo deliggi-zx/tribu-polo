@@ -233,10 +233,10 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
 
       <div style={styles.tabs}>
         {(['fixture', 'standings', 'stats', 'teams', 'awards'] as const).map(t => (
-  <button key={t} style={styles.tab(tab === t)} onClick={() => setTab(t)}>
-    {t === 'fixture' ? 'Fixture' : t === 'standings' ? 'Posiciones' : t === 'stats' ? 'Stats' : t === 'teams' ? 'Equipos' : '🏆'}
-  </button>
-))}
+          <button key={t} style={styles.tab(tab === t)} onClick={() => setTab(t)}>
+            {t === 'fixture' ? 'Fixture' : t === 'standings' ? 'Posiciones' : t === 'stats' ? 'Stats' : t === 'teams' ? 'Equipos' : 'Premios'}
+          </button>
+        ))}
       </div>
 
       <div style={styles.content}>
