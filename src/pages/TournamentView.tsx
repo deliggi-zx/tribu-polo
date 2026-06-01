@@ -416,10 +416,6 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
                 )
               })}
             </>
-          ) : tab === 'teams' ? (
-            <>
-              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, letterSpacing: 1, marginBottom: 12 }}>EQUIPOS</p>
-            </>
           ) : (
             <AwardsView tournament={tournament} isAdmin={isAdmin} />
           )
