@@ -226,7 +226,19 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
               if (pwd === 'tribu2026') { localStorage.setItem('tribu_admin', 'true'); window.location.reload() }
               else if (pwd !== null) alert('Incorrecta')
             }}>{isAdmin ? '✓ Admin' : 'Admin'}</button>
-            {isAdmin && <button style={{ ...styles.adminBtn, fontSize: 11 }} onClick={onReset}>Nuevo torneo</button>}
+            {isAdmin && <button style={{ ...styles.adminBtn, fontSize: 11, background: '#dc2626' }} onClick={async () => {
+              if (!confirm('Finalizar este torneo? Esta accion no se puede deshacer.')) return
+              const finalMatch = matches.find(m => m.stage === 'final' && m.status === 'finished')
+              let winnerName = null
+              if (finalMatch) {
+                const hg = getMatchGoals(finalMatch.id, finalMatch.team_home_id)
+                const ag = getMatchGoals(finalMatch.id, finalMatch.team_away_id)
+                const winnerId = hg >= ag ? finalMatch.team_home_id : finalMatch.team_away_id
+                winnerName = teams.find(t => t.id === winnerId)?.name ?? null
+              }
+              await supabase.from('tournaments').update({ status: 'finished', finished_at: new Date().toISOString(), winner_team_name: winnerName }).eq('id', tournament.id)
+              onReset()
+            }}>Finalizar torneo</button>}
           </div>
         </div>
       </div>
