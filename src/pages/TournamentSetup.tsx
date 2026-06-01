@@ -64,7 +64,7 @@ export default function TournamentSetup({ onCreated }: Props) {
     }
   }
 
-  async function generateGroupFixture(tournamentId: string, activeTeams: any[]) {
+  async function generateGroupFixture(tournamentId: string, _activeTeams: any[]) {
     const groups = ['A', 'B']
     for (const group of groups) {
       
