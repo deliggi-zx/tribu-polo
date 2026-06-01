@@ -21,7 +21,14 @@ export default function TournamentView({ tournament, onReset, initialMatchId }: 
         if (match) setSelectedMatch(match)
       }
     })
-    ...
+
+    const channel = supabase
+      .channel('tournament-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => loadData())
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [tournament.id])
 
   async function loadData() {

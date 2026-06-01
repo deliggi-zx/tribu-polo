@@ -76,11 +76,11 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }
 
   async function votePlayer(playerId: string) {
-  if (hasVoted) return
-  await supabase.from('mvp_votes').insert({ match_id: match.id, player_id: playerId, device_id: deviceId })
-  localStorage.setItem(`voted_match_${match.id}`, 'true')
-  await loadData()
-}
+    if (hasVoted) return
+    await supabase.from('mvp_votes').insert({ match_id: match.id, player_id: playerId, device_id: deviceId })
+    localStorage.setItem(`voted_match_${match.id}`, 'true')
+    await loadData()
+  }
 
   async function setOfficialMvp(playerId: string) {
     await supabase.from('mvp_official').upsert({ match_id: match.id, player_id: playerId })
@@ -92,7 +92,6 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }
 
   const allPlayers = players
-  
 
   const styles = {
     container: { minHeight: '100vh', background: '#0f172a', color: '#fff' },
@@ -112,32 +111,36 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
 
   if (loading) return <div style={{ ...styles.container, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p style={{ color: '#fff' }}>Cargando...</p></div>
 
+  const qrUrl = `${window.location.origin}/?match=${match.id}`
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={onBack}>← Volver al fixture</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#94a3b8', fontSize: 13 }}>{match.stage === 'group' ? `Grupo ${match.group_name}` : match.stage === 'semi' ? 'Semifinal' : 'Final'}</span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
-          {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}
+          <span style={{ color: '#94a3b8', fontSize: 13 }}>
+            {match.stage === 'group' ? `Grupo ${match.group_name}` : match.stage === 'semi' ? 'Semifinal' : 'Final'}
           </span>
-          <button onClick={() => setShowQR(!showQR)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
-          {showQR ? 'Cerrar QR' : '📱 QR'}
-          </button>
-        </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
+              {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}
+            </span>
+            <button onClick={() => setShowQR(!showQR)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+              {showQR ? 'Cerrar QR' : '📱 QR'}
+            </button>
+          </div>
         </div>
       </div>
-      </div>  {/* ← cierre de styles.header */}
 
       {showQR && (
-        <div style={{ background: '#1e293b', padding: 20, ...}}>
-          ...
+        <div style={{ background: '#1e293b', padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, borderBottom: '1px solid #334155' }}>
+          <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>Escaneá para votar al jugador destacado</p>
+          <div style={{ background: '#fff', padding: 12, borderRadius: 12 }}>
+            <QRCodeSVG value={qrUrl} size={180} />
+          </div>
+          <p style={{ color: '#475569', fontSize: 11, margin: 0 }}>{qrUrl}</p>
         </div>
       )}
-
-      {/* Marcador */}
-      <div style={styles.scoreboard}>
 
       {/* Marcador */}
       <div style={styles.scoreboard}>
