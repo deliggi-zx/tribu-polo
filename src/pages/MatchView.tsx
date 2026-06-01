@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { QRCodeSVG } from 'qrcode.react'
 
 type Props = { match: any; tournament: any; onBack: () => void; isAdmin: boolean }
 
@@ -12,6 +13,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const [chukker, setChukker] = useState(match.chukker_current ?? 1)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showQR, setShowQR] = useState(false)
   const deviceId = (() => {
     let id = localStorage.getItem('tribu_device_id')
     if (!id) {
@@ -116,11 +118,26 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
         <button style={styles.backBtn} onClick={onBack}>← Volver al fixture</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#94a3b8', fontSize: 13 }}>{match.stage === 'group' ? `Grupo ${match.group_name}` : match.stage === 'semi' ? 'Semifinal' : 'Final'}</span>
-          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
-            {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
+          {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}
           </span>
+          <button onClick={() => setShowQR(!showQR)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+          {showQR ? 'Cerrar QR' : '📱 QR'}
+          </button>
+        </div>
         </div>
       </div>
+      </div>  {/* ← cierre de styles.header */}
+
+      {showQR && (
+        <div style={{ background: '#1e293b', padding: 20, ...}}>
+          ...
+        </div>
+      )}
+
+      {/* Marcador */}
+      <div style={styles.scoreboard}>
 
       {/* Marcador */}
       <div style={styles.scoreboard}>

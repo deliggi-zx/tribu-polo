@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import MatchView from './MatchView'
 
-type Props = { tournament: any; onReset: () => void }
+type Props = { tournament: any; onReset: () => void; initialMatchId?: string | null }
 
-export default function TournamentView({ tournament, onReset }: Props) {
+export default function TournamentView({ tournament, onReset, initialMatchId }: Props) {
   const [tab, setTab] = useState<'fixture' | 'standings' | 'stats'>('fixture')
   const [matches, setMatches] = useState<any[]>([])
   const [teams, setTeams] = useState<any[]>([])
@@ -15,16 +15,13 @@ export default function TournamentView({ tournament, onReset }: Props) {
   const isAdmin = localStorage.getItem('tribu_admin') === 'true'
 
   useEffect(() => {
-    loadData()
-
-    // Suscripción en tiempo real
-    const channel = supabase
-      .channel('tournament-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => loadData())
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
+    loadData().then((loadedMatches) => {
+      if (initialMatchId && loadedMatches) {
+        const match = loadedMatches.find((m: any) => m.id === initialMatchId)
+        if (match) setSelectedMatch(match)
+      }
+    })
+    ...
   }, [tournament.id])
 
   async function loadData() {
@@ -40,6 +37,7 @@ export default function TournamentView({ tournament, onReset }: Props) {
     setGoals(g.data ?? [])
     setPlayers(p.data ?? [])
     setLoading(false)
+    return m.data ?? []
   }
 
   function getMatchGoals(matchId: string, teamId: string) {

@@ -7,8 +7,12 @@ import './App.css'
 export default function App() {
   const [tournament, setTournament] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [initialMatchId, setInitialMatchId] = useState<string | null>(null)
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const matchId = params.get('match')
+    if (matchId) setInitialMatchId(matchId)
     loadActiveTournament()
   }, [])
 
@@ -34,7 +38,7 @@ export default function App() {
     <div>
       {!tournament
         ? <TournamentSetup onCreated={setTournament} />
-        : <TournamentView tournament={tournament} onReset={() => setTournament(null)} />
+        : <TournamentView tournament={tournament} onReset={() => setTournament(null)} initialMatchId={initialMatchId} />
       }
     </div>
   )
