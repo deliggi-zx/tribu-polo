@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -7,6 +7,68 @@ function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; s
   return (
     <div style={{ width: size, height: size, borderRadius: '50%', background: '#8B1A3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 700, color: '#C9A84C', flexShrink: 0 }}>
       {name.charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
+function FlapDigit({ value, flipping }: { value: number; flipping: boolean }) {
+  return (
+    <div style={{
+      width: 56, height: 76,
+      background: 'linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 45%, #2a2a2a 50%, #3a3a3a 100%)',
+      borderRadius: 8,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Courier New, monospace',
+      fontSize: 52, fontWeight: 700,
+      color: '#f0ead0',
+      position: 'relative' as const,
+      overflow: 'hidden' as const,
+      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.6)',
+      border: '1px solid #555',
+      transform: flipping ? 'scaleY(0.1)' : 'scaleY(1)',
+      transition: flipping ? 'transform 0.08s ease-in' : 'transform 0.08s ease-out',
+    }}>
+      <div style={{
+        position: 'absolute' as const, top: 0, left: 0, right: 0, height: '50%',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.1) 100%)',
+        borderBottom: '1px solid #222',
+        borderRadius: '8px 8px 0 0',
+      }} />
+      <div style={{
+        position: 'absolute' as const,
+        left: 4, right: 4,
+        top: 'calc(50% - 1px)',
+        height: 2,
+        background: '#111',
+      }} />
+      {value}
+    </div>
+  )
+}
+
+function FlapScore({ score }: { score: number }) {
+  const [displayScore, setDisplayScore] = useState(score)
+  const [flipping, setFlipping] = useState(false)
+  const prevScore = useRef(score)
+
+  useEffect(() => {
+    if (score !== prevScore.current) {
+      setFlipping(true)
+      setTimeout(() => {
+        setDisplayScore(score)
+        setFlipping(false)
+      }, 100)
+      prevScore.current = score
+    }
+  }, [score])
+
+  const tens = Math.floor(displayScore / 10)
+  const units = displayScore % 10
+
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      <FlapDigit value={tens} flipping={flipping} />
+      <FlapDigit value={units} flipping={flipping} />
     </div>
   )
 }
@@ -22,6 +84,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showQR, setShowQR] = useState(false)
+
   const deviceId = (() => {
     let id = localStorage.getItem('tribu_device_id')
     if (!id) {
@@ -31,12 +94,48 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
     return id
   })()
 
+  function ringBell() {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const times = [0, 0.25, 0.5]
+      times.forEach(t => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(1200, ctx.currentTime + t)
+        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + t + 0.3)
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + t)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.35)
+        osc.start(ctx.currentTime + t)
+        osc.stop(ctx.currentTime + t + 0.35)
+
+        const osc2 = ctx.createOscillator()
+        const gain2 = ctx.createGain()
+        osc2.connect(gain2)
+        gain2.connect(ctx.destination)
+        osc2.type = 'sine'
+        osc2.frequency.setValueAtTime(2400, ctx.currentTime + t)
+        osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + t + 0.3)
+        gain2.gain.setValueAtTime(0.3, ctx.currentTime + t)
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.3)
+        osc2.start(ctx.currentTime + t)
+        osc2.stop(ctx.currentTime + t + 0.3)
+      })
+    } catch (e) {}
+  }
+
   useEffect(() => {
     loadData()
 
     const channel = supabase
       .channel(`match-${match.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, () => loadData())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, () => {
+        ringBell()
+        loadData()
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_votes', filter: `match_id=eq.${match.id}` }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_official', filter: `match_id=eq.${match.id}` }, () => loadData())
       .subscribe()
@@ -105,10 +204,6 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
     container: { minHeight: '100vh', background: '#6B0F2B', color: '#fff' },
     header: { background: '#4A0B1E', padding: '16px', borderBottom: '1px solid #8B1A3A' },
     backBtn: { background: 'none', border: 'none', color: '#d4a0b0', cursor: 'pointer', fontSize: 15, marginBottom: 12, padding: 0 },
-    scoreboard: { background: '#4A0B1E', borderRadius: 16, padding: 20, margin: 16, border: '1px solid #8B1A3A', textAlign: 'center' as const },
-    score: { fontSize: 56, fontWeight: 800, color: '#C9A84C' },
-    teamName: { fontSize: 16, fontWeight: 600, color: '#fff' },
-    chukkerBadge: { display: 'inline-block', background: '#dc2626', color: '#fff', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700, marginTop: 8 },
     section: { padding: '0 16px 16px' },
     sectionTitle: { color: '#d4a0b0', fontSize: 12, fontWeight: 700, letterSpacing: 1, marginBottom: 12, marginTop: 16 },
     btn: (color: string) => ({ background: color, color: color === '#C9A84C' ? '#4A0B1E' : '#fff', border: 'none', borderRadius: 10, padding: '12px 16px', cursor: 'pointer', fontWeight: 700, fontSize: 14, flex: 1 }),
@@ -150,26 +245,28 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
         </div>
       )}
 
-      {/* Marcador */}
-      <div style={styles.scoreboard}>
+      {/* Marcador con chapas */}
+      <div style={{ background: 'linear-gradient(135deg, #2a2218 0%, #1a1510 100%)', margin: 16, borderRadius: 16, padding: '20px 16px', border: '2px solid #4a3a28', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <Avatar url={match.team_home?.logo_url} name={match.team_home?.name ?? '?'} size={40} />
-            <p style={{ ...styles.teamName, textAlign: 'right' as const, margin: 0 }}>{match.team_home?.name}</p>
-            <p style={{ color: '#d4a0b0', fontSize: 12, margin: 0 }}>H: {match.team_home?.handicap ?? 0}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_home?.name}</p>
+            <p style={{ color: '#888', fontSize: 11, margin: 0 }}>H: {match.team_home?.handicap ?? 0}</p>
+            <FlapScore score={homeGoals} />
           </div>
-          <div style={{ padding: '0 20px' }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={styles.score}>{homeGoals}</span>
-              <span style={{ color: '#8B1A3A', fontSize: 32 }}>-</span>
-              <span style={styles.score}>{awayGoals}</span>
-            </div>
-            {match.status === 'live' && <div style={styles.chukkerBadge}>Chukker {chukker}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 12px' }}>
+            {match.status === 'live' && (
+              <div style={{ background: '#8B1A2A', color: '#C9A84C', fontSize: 11, fontWeight: 700, letterSpacing: 1, padding: '3px 10px', borderRadius: 20 }}>
+                Ch. {chukker}
+              </div>
+            )}
+            <div style={{ width: 1, height: 40, background: 'linear-gradient(180deg, transparent, #4a3a28, transparent)' }} />
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <Avatar url={match.team_away?.logo_url} name={match.team_away?.name ?? '?'} size={40} />
-            <p style={{ ...styles.teamName, margin: 0 }}>{match.team_away?.name}</p>
-            <p style={{ color: '#d4a0b0', fontSize: 12, margin: 0 }}>H: {match.team_away?.handicap ?? 0}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_away?.name}</p>
+            <p style={{ color: '#888', fontSize: 11, margin: 0 }}>H: {match.team_away?.handicap ?? 0}</p>
+            <FlapScore score={awayGoals} />
           </div>
         </div>
       </div>
@@ -178,36 +275,34 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       {isAdmin && match.status !== 'finished' && (
         <div style={styles.section}>
           <p style={styles.sectionTitle}>REGISTRAR GOL</p>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             <span style={{ color: '#94a3b8', fontSize: 14 }}>Chukker:</span>
             <input style={styles.input} type="number" min={1} max={tournament.chukkers_per_match} value={chukker} onChange={e => setChukker(Number(e.target.value))} />
           </div>
-
           <div style={{ display: 'flex', gap: 8 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' }}>{match.team_home?.name}</p>
+              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' as const }}>{match.team_home?.name}</p>
               {players.filter(p => p.team_id === match.team_home_id).map(player => (
                 <button key={player.id} style={{ ...styles.playerBtn(false), display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => addGoal(player.id, match.team_home_id)} disabled={saving}>
-  <Avatar url={player.photo_url} name={player.name} size={28} />
-  <span>{player.name}</span>
-</button>
+                  <Avatar url={player.photo_url} name={player.name} size={28} />
+                  <span>{player.name}</span>
+                </button>
               ))}
             </div>
             <div style={{ width: 1, background: '#8B1A3A' }} />
             <div style={{ flex: 1 }}>
-              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' }}>{match.team_away?.name}</p>
+              <p style={{ color: '#C9A84C', fontWeight: 700, fontSize: 13, marginBottom: 8, textAlign: 'center' as const }}>{match.team_away?.name}</p>
               {players.filter(p => p.team_id === match.team_away_id).map(player => (
-                <button key={player.id} style={styles.playerBtn(false)} onClick={() => addGoal(player.id, match.team_away_id)} disabled={saving}>
-                   {player.name}
+                <button key={player.id} style={{ ...styles.playerBtn(false), display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => addGoal(player.id, match.team_away_id)} disabled={saving}>
+                  <Avatar url={player.photo_url} name={player.name} size={28} />
+                  <span>{player.name}</span>
                 </button>
               ))}
             </div>
           </div>
-
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             {goals.length > 0 && (
-              <button style={styles.btn('#334155')} onClick={removeLastGoal}>↩ Deshacer último gol</button>
+              <button style={styles.btn('#334155')} onClick={removeLastGoal}>↩ Deshacer</button>
             )}
             <button style={styles.btn('#166534')} onClick={finishMatch}>✓ Finalizar partido</button>
           </div>
@@ -232,30 +327,30 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       <div style={styles.section}>
         <p style={styles.sectionTitle}>JUGADOR DESTACADO</p>
         {mvpOfficial ? (
-          <div style={{ background: '#1e293b', borderRadius: 12, padding: 16, textAlign: 'center' }}>
-            <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>Destacado oficial</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: '#f8d000' }}>⭐ {mvpOfficial.player?.name}</p>
+          <div style={{ background: '#4A0B1E', borderRadius: 12, padding: 16, textAlign: 'center' as const, border: '1px solid #8B1A3A' }}>
+            <p style={{ color: '#d4a0b0', fontSize: 12, marginBottom: 4 }}>Destacado oficial</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C' }}>⭐ {mvpOfficial.player?.name}</p>
           </div>
         ) : (
           <>
             {!hasVoted ? (
               <>
-                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Votá al jugador destacado del partido:</p>
+                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Vota al jugador destacado del partido:</p>
                 {allPlayers.map(player => (
                   <button key={player.id} style={{ ...styles.playerBtn(false), display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => votePlayer(player.id)}>
-  <Avatar url={player.photo_url} name={player.name} size={28} />
-  <span>⭐ {player.name}</span>
-  <span style={{ color: '#d4a0b0', fontSize: 12, marginLeft: 'auto' }}>({getMvpVoteCount(player.id)} votos)</span>
-</button>
+                    <Avatar url={player.photo_url} name={player.name} size={28} />
+                    <span>⭐ {player.name}</span>
+                    <span style={{ color: '#d4a0b0', fontSize: 12, marginLeft: 'auto' }}>({getMvpVoteCount(player.id)} votos)</span>
+                  </button>
                 ))}
               </>
             ) : (
-              <div style={{ background: '#1e293b', borderRadius: 12, padding: 16 }}>
-                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Votos actuales:</p>
+              <div style={{ background: '#4A0B1E', borderRadius: 12, padding: 16, border: '1px solid #8B1A3A' }}>
+                <p style={{ color: '#d4a0b0', fontSize: 13, marginBottom: 12 }}>Votos actuales:</p>
                 {allPlayers.sort((a, b) => getMvpVoteCount(b.id) - getMvpVoteCount(a.id)).map(player => (
-                  <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #334155' }}>
+                  <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #5A1525' }}>
                     <span>{player.name}</span>
-                    <span style={{ color: '#f8d000', fontWeight: 700 }}>{getMvpVoteCount(player.id)} votos</span>
+                    <span style={{ color: '#C9A84C', fontWeight: 700 }}>{getMvpVoteCount(player.id)} votos</span>
                   </div>
                 ))}
               </div>
