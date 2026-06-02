@@ -11,7 +11,7 @@ function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; s
   )
 }
 
-function FlapDigit({ value, flipping }: { value: number; flipping: boolean }) {
+function FlapDigit({ value, flipping, highlight = false }: { value: number; flipping: boolean; highlight?: boolean }) {
   return (
     <div style={{
       width: 56, height: 76,
@@ -20,7 +20,7 @@ function FlapDigit({ value, flipping }: { value: number; flipping: boolean }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Courier New, monospace',
       fontSize: 52, fontWeight: 700,
-      color: '#f0ead0',
+      color: highlight ? '#FFE000' : '#f0ead0',
       position: 'relative' as const,
       overflow: 'hidden' as const,
       boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.6)',
@@ -46,7 +46,7 @@ function FlapDigit({ value, flipping }: { value: number; flipping: boolean }) {
   )
 }
 
-function FlapScore({ score }: { score: number }) {
+function FlapScore({ score, highlight = false }: { score: number; highlight?: boolean }) {
   const [displayScore, setDisplayScore] = useState(score)
   const [flipping, setFlipping] = useState(false)
   const prevScore = useRef(score)
@@ -67,8 +67,8 @@ function FlapScore({ score }: { score: number }) {
 
   return (
     <div style={{ display: 'flex', gap: 4 }}>
-      <FlapDigit value={tens} flipping={flipping} />
-      <FlapDigit value={units} flipping={flipping} />
+      <FlapDigit value={tens} flipping={flipping} highlight={highlight} />
+      <FlapDigit value={units} flipping={flipping} highlight={highlight} />
     </div>
   )
 }
@@ -84,6 +84,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [canchMode, setCanchMode] = useState(false)
 
   const deviceId = (() => {
     let id = localStorage.getItem('tribu_device_id')
@@ -201,7 +202,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const allPlayers = players
 
   const styles = {
-    container: { minHeight: '100vh', background: '#6B0F2B', color: '#fff' },
+    container: { minHeight: '100vh', background: canchMode ? '#0A0005' : '#6B0F2B', color: '#fff' },
     header: { background: '#4A0B1E', padding: '16px', borderBottom: '1px solid #8B1A3A' },
     backBtn: { background: 'none', border: 'none', color: '#d4a0b0', cursor: 'pointer', fontSize: 15, marginBottom: 12, padding: 0 },
     section: { padding: '0 16px 16px' },
@@ -228,6 +229,9 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
               {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}
             </span>
+            <button onClick={() => setCanchMode(!canchMode)} style={{ background: canchMode ? '#FFE000' : '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: canchMode ? '#000' : '#fff', cursor: 'pointer', fontSize: 12, fontWeight: canchMode ? 700 : 400 }}>
+              {canchMode ? '☀️ Normal' : '☀️ Cancha'}
+            </button>
             <button onClick={() => setShowQR(!showQR)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
               {showQR ? 'Cerrar QR' : '📱 QR'}
             </button>
@@ -246,13 +250,13 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       )}
 
       {/* Marcador con chapas */}
-      <div style={{ background: 'linear-gradient(135deg, #2a2218 0%, #1a1510 100%)', margin: 16, borderRadius: 16, padding: '20px 16px', border: '2px solid #4a3a28', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
+      <div style={{ background: canchMode ? '#000' : 'linear-gradient(135deg, #2a2218 0%, #1a1510 100%)', margin: 16, borderRadius: 16, padding: '20px 16px', border: canchMode ? '2px solid #FFE000' : '2px solid #4a3a28', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <Avatar url={match.team_home?.logo_url} name={match.team_home?.name ?? '?'} size={40} />
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_home?.name}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: canchMode ? '#FFE000' : '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_home?.name}</p>
             <p style={{ color: '#888', fontSize: 11, margin: 0 }}>H: {match.team_home?.handicap ?? 0}</p>
-            <FlapScore score={homeGoals} />
+            <FlapScore score={homeGoals} highlight={canchMode} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 12px' }}>
             {match.status === 'live' && (
@@ -266,7 +270,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             <Avatar url={match.team_away?.logo_url} name={match.team_away?.name ?? '?'} size={40} />
             <p style={{ fontSize: 13, fontWeight: 600, color: '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_away?.name}</p>
             <p style={{ color: '#888', fontSize: 11, margin: 0 }}>H: {match.team_away?.handicap ?? 0}</p>
-            <FlapScore score={awayGoals} />
+            <FlapScore score={awayGoals} highlight={canchMode} />
           </div>
         </div>
       </div>
