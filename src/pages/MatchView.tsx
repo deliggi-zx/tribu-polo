@@ -97,33 +97,9 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
 
   function ringBell() {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const times = [0, 0.25, 0.5]
-      times.forEach(t => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(1200, ctx.currentTime + t)
-        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + t + 0.3)
-        gain.gain.setValueAtTime(0.6, ctx.currentTime + t)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.35)
-        osc.start(ctx.currentTime + t)
-        osc.stop(ctx.currentTime + t + 0.35)
-
-        const osc2 = ctx.createOscillator()
-        const gain2 = ctx.createGain()
-        osc2.connect(gain2)
-        gain2.connect(ctx.destination)
-        osc2.type = 'sine'
-        osc2.frequency.setValueAtTime(2400, ctx.currentTime + t)
-        osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + t + 0.3)
-        gain2.gain.setValueAtTime(0.3, ctx.currentTime + t)
-        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.3)
-        osc2.start(ctx.currentTime + t)
-        osc2.stop(ctx.currentTime + t + 0.3)
-      })
+      const audio = new Audio('/bell.wav')
+      audio.volume = 1.0
+      audio.play().catch(() => {})
     } catch (e) {}
   }
 
