@@ -209,8 +209,8 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
               {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? 'En vivo' : 'Pendiente'}
             </span>
-            <button onClick={() => setSoundOn(!soundOn)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
-              {soundOn ? 'Snd ON' : 'Snd OFF'}
+            <button onClick={() => setSoundOn(!soundOn)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 14 }}>
+              {soundOn ? '\uD83D\uDD14' : '\uD83D\uDD15'}
             </button>
             <button onClick={() => setCanchMode(!canchMode)} style={{ background: canchMode ? '#FFE000' : '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: canchMode ? '#000' : '#fff', cursor: 'pointer', fontSize: 12, fontWeight: canchMode ? 700 : 400 }}>
               {canchMode ? 'Normal' : 'Cancha'}
