@@ -14,12 +14,14 @@ function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; s
 function FlapDigit({ value, flipping, highlight = false }: { value: number; flipping: boolean; highlight?: boolean }) {
   return (
     <div style={{
-      width: 56, height: 76,
+      width: highlight ? 70 : 56,
+      height: highlight ? 92 : 76,
       background: 'linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 45%, #2a2a2a 50%, #3a3a3a 100%)',
       borderRadius: 8,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Courier New, monospace',
-      fontSize: 52, fontWeight: 700,
+      fontSize: highlight ? 64 : 52,
+      fontWeight: 700,
       color: highlight ? '#FFE000' : '#f0ead0',
       position: 'relative' as const,
       overflow: 'hidden' as const,
@@ -198,20 +200,23 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>← Volver al fixture</button>
+        <button style={styles.backBtn} onClick={onBack}>Volver al fixture</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#94a3b8', fontSize: 13 }}>
             {match.stage === 'group' ? `Grupo ${match.group_name}` : match.stage === 'semi' ? 'Semifinal' : 'Final'}
           </span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff' }}>
-              {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? '🔴 En vivo' : 'Pendiente'}
+              {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? 'En vivo' : 'Pendiente'}
             </span>
-            <button onClick={() => setCanchMode(!canchMode)} style={{ background: canchMode ? '#FFE000' : '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: canchMode ? '#000' : '#fff', cursor: 'pointer', fontSize: 12, fontWeight: canchMode ? 700 : 400 }}>
-              {canchMode ? '☀️ Normal' : '☀️ Cancha'}
-            </button>
             <button onClick={() => setSoundOn(!soundOn)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
               {soundOn ? 'Snd ON' : 'Snd OFF'}
+            </button>
+            <button onClick={() => setCanchMode(!canchMode)} style={{ background: canchMode ? '#FFE000' : '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: canchMode ? '#000' : '#fff', cursor: 'pointer', fontSize: 12, fontWeight: canchMode ? 700 : 400 }}>
+              {canchMode ? 'Normal' : 'Cancha'}
+            </button>
+            <button onClick={() => setShowQR(!showQR)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+              {showQR ? 'Cerrar QR' : 'QR'}
             </button>
           </div>
         </div>
@@ -219,7 +224,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
 
       {showQR && (
         <div style={{ background: '#1e293b', padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, borderBottom: '1px solid #334155' }}>
-          <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>Escaneá para votar al jugador destacado</p>
+          <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>Escanea para votar al jugador destacado</p>
           <div style={{ background: '#fff', padding: 12, borderRadius: 12 }}>
             <QRCodeSVG value={qrUrl} size={180} />
           </div>
@@ -246,7 +251,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <Avatar url={match.team_away?.logo_url} name={match.team_away?.name ?? '?'} size={40} />
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_away?.name}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: canchMode ? '#FFE000' : '#f0ead0', margin: 0, textAlign: 'center' as const, letterSpacing: 1 }}>{match.team_away?.name}</p>
             <p style={{ color: '#888', fontSize: 11, margin: 0 }}>H: {match.team_away?.handicap ?? 0}</p>
             <FlapScore score={awayGoals} highlight={canchMode} />
           </div>
@@ -284,9 +289,9 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             {goals.length > 0 && (
-              <button style={styles.btn('#334155')} onClick={removeLastGoal}>↩ Deshacer</button>
+              <button style={styles.btn('#334155')} onClick={removeLastGoal}>Deshacer</button>
             )}
-            <button style={styles.btn('#166534')} onClick={finishMatch}>✓ Finalizar partido</button>
+            <button style={styles.btn('#166534')} onClick={finishMatch}>Finalizar partido</button>
           </div>
         </div>
       )}
@@ -311,7 +316,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
         {mvpOfficial ? (
           <div style={{ background: '#4A0B1E', borderRadius: 12, padding: 16, textAlign: 'center' as const, border: '1px solid #8B1A3A' }}>
             <p style={{ color: '#d4a0b0', fontSize: 12, marginBottom: 4 }}>Destacado oficial</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C' }}>⭐ {mvpOfficial.player?.name}</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C' }}>Estrella {mvpOfficial.player?.name}</p>
           </div>
         ) : (
           <>
@@ -321,7 +326,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
                 {allPlayers.map(player => (
                   <button key={player.id} style={{ ...styles.playerBtn(false), display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => votePlayer(player.id)}>
                     <Avatar url={player.photo_url} name={player.name} size={28} />
-                    <span>⭐ {player.name}</span>
+                    <span>{player.name}</span>
                     <span style={{ color: '#d4a0b0', fontSize: 12, marginLeft: 'auto' }}>({getMvpVoteCount(player.id)} votos)</span>
                   </button>
                 ))}
@@ -342,7 +347,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
                 <p style={{ ...styles.sectionTitle, marginTop: 16 }}>CONFIRMAR DESTACADO OFICIAL</p>
                 {allPlayers.map(player => (
                   <button key={player.id} style={styles.playerBtn(false)} onClick={() => setOfficialMvp(player.id)}>
-                    ✓ {player.name} ({getMvpVoteCount(player.id)} votos)
+                    {player.name} ({getMvpVoteCount(player.id)} votos)
                   </button>
                 ))}
               </>
