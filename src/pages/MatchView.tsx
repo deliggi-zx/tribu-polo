@@ -88,6 +88,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const [showQR, setShowQR] = useState(false)
   const [canchMode, setCanchMode] = useState(false)
   const [soundOn, setSoundOn] = useState(true)
+  const soundOnRef = useRef(true)
 
   const deviceId = (() => {
     let id = localStorage.getItem('tribu_device_id')
