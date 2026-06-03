@@ -210,8 +210,8 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             <button onClick={() => setCanchMode(!canchMode)} style={{ background: canchMode ? '#FFE000' : '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: canchMode ? '#000' : '#fff', cursor: 'pointer', fontSize: 12, fontWeight: canchMode ? 700 : 400 }}>
               {canchMode ? '☀️ Normal' : '☀️ Cancha'}
             </button>
-            <button onClick={() => setShowQR(!showQR)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
-              {showQR ? 'Cerrar QR' : '📱 QR'}
+            <button onClick={() => setSoundOn(!soundOn)} style={{ background: '#334155', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+              {soundOn ? 'Snd ON' : 'Snd OFF'}
             </button>
           </div>
         </div>
