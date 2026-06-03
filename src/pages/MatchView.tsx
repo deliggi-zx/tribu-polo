@@ -100,7 +100,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   })()
 
   function ringBell() {
-    if (!soundOn) return
+    if (!soundOnRef.current) return
     try {
       const audio = new Audio('/bell.wav')
       audio.volume = 1.0
