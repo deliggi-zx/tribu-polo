@@ -14,14 +14,14 @@ function Avatar({ url, name, size = 32 }: { url?: string | null; name: string; s
 function FlapDigit({ value, flipping, highlight = false }: { value: number; flipping: boolean; highlight?: boolean }) {
   return (
     <div style={{
-      width: highlight ? 70 : 56,
-      height: highlight ? 92 : 76,
+      width: 56,
+      height: 76,
       background: 'linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 45%, #2a2a2a 50%, #3a3a3a 100%)',
       borderRadius: 8,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Courier New, monospace',
-      fontSize: highlight ? 64 : 52,
-      fontWeight: 700,
+      fontSize: 52,
+      fontWeight: highlight ? 900 : 700,
       color: highlight ? '#FFE000' : '#f0ead0',
       position: 'relative' as const,
       overflow: 'hidden' as const,
