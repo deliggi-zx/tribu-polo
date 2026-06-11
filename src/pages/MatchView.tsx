@@ -273,9 +273,12 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   async function addGoalNoPlayer(teamId: string) {
     console.log('[Goal] addGoalNoPlayer → matchStatus=', matchStatus, '| clock?.status=', clock?.status, '| saving=', saving)
     if (saving) return
-    if (matchStatus !== 'live' && clock?.status !== 'running') {
-      console.log('[Goal] BLOQUEADO: partido no iniciado')
-      alert('Iniciá el cronómetro antes de marcar goles')
+    if (clock?.status !== 'running') {
+      const msg = clock?.status === 'paused'
+        ? 'Reanudá el cronómetro antes de marcar goles'
+        : 'Iniciá el cronómetro antes de marcar goles'
+      console.log('[Goal] BLOQUEADO:', msg)
+      alert(msg)
       return
     }
     setSaving(true)
