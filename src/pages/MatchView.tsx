@@ -167,13 +167,35 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
     loadClock()
     const channel = supabase
       .channel(`match-${match.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← goals INSERT', payload); ringBell(); loadData() })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← goals DELETE', payload); loadData() })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← goals UPDATE', payload); loadData() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_votes', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← mvp_votes *', payload); loadData() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_official', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← mvp_official *', payload); loadData() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_clock', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← match_clock *', payload); loadClock() })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← matches UPDATE, nuevo status=', (payload.new as any)?.status); if (payload.new) setMatchStatus((payload.new as any).status) })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'goals' }, (payload) => {
+        if ((payload.new as any)?.match_id !== match.id && (payload.old as any)?.match_id !== match.id) return
+        console.log('[Realtime] ← goals INSERT', payload); ringBell(); loadData()
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'goals' }, (payload) => {
+        if ((payload.new as any)?.match_id !== match.id && (payload.old as any)?.match_id !== match.id) return
+        console.log('[Realtime] ← goals DELETE', payload); loadData()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'goals' }, (payload) => {
+        if ((payload.new as any)?.match_id !== match.id && (payload.old as any)?.match_id !== match.id) return
+        console.log('[Realtime] ← goals UPDATE', payload); loadData()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_votes' }, (payload) => {
+        if ((payload.new as any)?.match_id !== match.id && (payload.old as any)?.match_id !== match.id) return
+        console.log('[Realtime] ← mvp_votes *', payload); loadData()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_official' }, (payload) => {
+        if ((payload.new as any)?.match_id !== match.id && (payload.old as any)?.match_id !== match.id) return
+        console.log('[Realtime] ← mvp_official *', payload); loadData()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_clock' }, (payload) => {
+        if ((payload.new as any)?.match_id !== match.id) return
+        console.log('[Realtime] ← match_clock *', payload); loadClock()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, (payload) => {
+        if ((payload.new as any)?.id !== match.id) return
+        console.log('[Realtime] ← matches UPDATE, nuevo status=', (payload.new as any)?.status)
+        if (payload.new) setMatchStatus((payload.new as any).status)
+      })
       .subscribe((status, err) => {
         console.log('[Realtime] subscribe status=', status, err ? '| err=' + err : '')
       })
