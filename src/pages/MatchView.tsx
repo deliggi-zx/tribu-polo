@@ -102,8 +102,10 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   const [showQR, setShowQR] = useState(false)
   const [canchMode, setCanchMode] = useState(false)
   const [soundOn, setSoundOn] = useState(true)
+  const [matchStatus, setMatchStatus] = useState(match.status)
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
   const soundOnRef = useRef(true)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const [clock, setClock] = useState<any | null>(null)
   const clockRef = useRef<any | null>(null)
@@ -117,9 +119,31 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
     return id
   })()
 
+  useEffect(() => {
+    const audio = new Audio('/bell.wav')
+    audio.volume = 1.0
+    audioRef.current = audio
+    let unlocked = false
+    const unlock = () => {
+      if (unlocked) return
+      unlocked = true
+      audio.play().then(() => { audio.pause(); audio.currentTime = 0 }).catch(() => {})
+      window.removeEventListener('click', unlock)
+      window.removeEventListener('touchstart', unlock)
+    }
+    window.addEventListener('click', unlock)
+    window.addEventListener('touchstart', unlock)
+    return () => {
+      window.removeEventListener('click', unlock)
+      window.removeEventListener('touchstart', unlock)
+    }
+  }, [])
+
   function ringBell() {
     if (!soundOnRef.current) return
-    try { const audio = new Audio('/bell.wav'); audio.volume = 1.0; audio.play().catch(() => {}) } catch (e) {}
+    if (!audioRef.current) return
+    audioRef.current.currentTime = 0
+    audioRef.current.play().catch(() => {})
   }
 
   async function loadClock() {
@@ -141,12 +165,12 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_votes', filter: `match_id=eq.${match.id}` }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_official', filter: `match_id=eq.${match.id}` }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'match_clock', filter: `match_id=eq.${match.id}` }, () => loadClock())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${match.id}` }, (payload) => { if (payload.new) setMatchStatus((payload.new as any).status) })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [match.id])
 
   async function loadData() {
-    setLoading(true)
     const [g, p, v, m] = await Promise.all([
       supabase.from('goals').select('*, player:players(*)').eq('match_id', match.id).order('created_at'),
       supabase.from('players').select('*').in('team_id', [match.team_home_id, match.team_away_id]),
@@ -213,6 +237,10 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   // Sumar gol sin asignar jugador
   async function addGoalNoPlayer(teamId: string) {
     if (saving) return
+    if (matchStatus !== 'live' && clock?.status !== 'running') {
+      alert('Iniciá el cronómetro antes de marcar goles')
+      return
+    }
     setSaving(true)
     await supabase.from('goals').insert({ match_id: match.id, player_id: null, team_id: teamId, chukker })
     await supabase.from('matches').update({ status: 'live', chukker_current: chukker }).eq('id', match.id)
@@ -371,8 +399,8 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
             {match.stage === 'group' ? `Grupo ${match.group_name}` : match.stage === 'semi' ? 'Semifinal' : 'Final'}
           </span>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: match.status === 'finished' ? '#166534' : match.status === 'live' ? '#dc2626' : '#334155', color: '#fff', fontWeight: 700, letterSpacing: 1 }}>
-              {match.status === 'finished' ? 'Finalizado' : match.status === 'live' ? 'En vivo' : 'Pendiente'}
+            <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: matchStatus === 'finished' ? '#166534' : matchStatus === 'live' ? '#dc2626' : '#334155', color: '#fff', fontWeight: 700, letterSpacing: 1 }}>
+              {matchStatus === 'finished' ? 'Finalizado' : matchStatus === 'live' ? 'En vivo' : 'Pendiente'}
             </span>
             <button onClick={() => { const next = !soundOn; soundOnRef.current = next; setSoundOn(next) }} style={{ background: '#2A0A12', border: `1px solid ${gold}66`, borderRadius: 8, padding: '4px 10px', color: gold, cursor: 'pointer', fontSize: 14 }}>
               {soundOn ? '🔔' : '🔕'}
@@ -436,7 +464,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
           </div>
 
           {/* Botón cronómetro dentro del recuadro — solo admin */}
-          {isAdmin && match.status !== 'finished' && (
+          {isAdmin && matchStatus !== 'finished' && (
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' as const }}>
               {/* Estado: sin reloj → Iniciar Chukker */}
               {!clock && (
@@ -501,7 +529,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
               <FlapScore
                 score={homeGoals}
                 highlight={canchMode}
-                isAdmin={isAdmin && match.status !== 'finished'}
+                isAdmin={isAdmin && matchStatus !== 'finished'}
                 onTap={() => addGoalNoPlayer(match.team_home_id)}
                 pendingCount={homePending}
               />
@@ -509,8 +537,8 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
 
             {/* Chukker medallón */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 68, flexShrink: 0 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: match.status === 'live' ? `radial-gradient(circle, #B8960C 0%, #8B6914 50%, #6B4F10 100%)` : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' as const, boxShadow: match.status === 'live' ? `0 0 0 2px ${gold}, 0 4px 12px rgba(0,0,0,0.6)` : 'none' }}>
-                {match.status === 'live' && <>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: matchStatus === 'live' ? `radial-gradient(circle, #B8960C 0%, #8B6914 50%, #6B4F10 100%)` : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' as const, boxShadow: matchStatus === 'live' ? `0 0 0 2px ${gold}, 0 4px 12px rgba(0,0,0,0.6)` : 'none' }}>
+                {matchStatus === 'live' && <>
                   <span style={{ color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>Ch.</span>
                   <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{chukker}</span>
                 </>}
@@ -526,7 +554,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
               <FlapScore
                 score={awayGoals}
                 highlight={canchMode}
-                isAdmin={isAdmin && match.status !== 'finished'}
+                isAdmin={isAdmin && matchStatus !== 'finished'}
                 onTap={() => addGoalNoPlayer(match.team_away_id)}
                 pendingCount={awayPending}
               />
@@ -537,7 +565,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       </div>
 
       {/* Panel asignación de jugadores — solo admin, solo partido en vivo */}
-      {isAdmin && match.status !== 'finished' && (
+      {isAdmin && matchStatus !== 'finished' && (
         <div style={{ padding: '0 16px 16px' }}>
           <p style={{ color: goldLight, fontSize: 12, fontWeight: 700, letterSpacing: 2, marginBottom: 4, marginTop: 8, textAlign: 'center' as const, fontFamily: 'Georgia, serif' }}>ASIGNAR GOL</p>
           <p style={{ color: '#d4a0b0', fontSize: 11, textAlign: 'center' as const, marginBottom: 12 }}>Tocá el marcador para sumar un gol · Tocá un jugador para asignarlo</p>
