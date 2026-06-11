@@ -468,7 +468,9 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       {/* Marcador — tappable para admin */}
       <div style={{ margin: '16px', borderRadius: 16, overflow: 'hidden', boxShadow: `0 0 0 2px ${gold}, 0 0 0 5px #8B6914, 0 8px 32px rgba(0,0,0,0.8)`, position: 'relative' as const }}>
         <div style={{ background: `linear-gradient(90deg, ${darkBg}, #8B6914, ${gold}, #8B6914, ${darkBg})`, height: 4 }} />
-        <div style={{ background: canchMode ? '#000' : 'linear-gradient(160deg, #3d2810 0%, #2a1c0a 30%, #1e1408 60%, #2a1c0a 100%)', padding: '16px 16px 24px' }}>
+        <div style={{ position: 'relative' as const, padding: '16px 16px 24px', ...(canchMode ? { background: '#000' } : { backgroundImage: 'url(/wood-texture.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }) }}>
+          {!canchMode && <div style={{ position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.45)', zIndex: 0 }} />}
+          <div style={{ position: 'relative' as const, zIndex: 1 }}>
 
           {/* Cronómetro — centrado encima del marcador, visible para todos */}
           <div style={{ textAlign: 'center', marginBottom: 16 }}>
@@ -598,6 +600,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
                 pendingCount={awayPending}
               />
             </div>
+          </div>
           </div>
         </div>
         <div style={{ background: `linear-gradient(90deg, ${darkBg}, #8B6914, ${gold}, #8B6914, ${darkBg})`, height: 4 }} />
