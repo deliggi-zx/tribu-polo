@@ -123,11 +123,15 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
     const audio = new Audio('/bell.wav')
     audio.volume = 1.0
     audioRef.current = audio
+    console.log('[Bell] audio inicializado, src=/bell.wav')
     let unlocked = false
     const unlock = () => {
       if (unlocked) return
       unlocked = true
-      audio.play().then(() => { audio.pause(); audio.currentTime = 0 }).catch(() => {})
+      console.log('[Bell] primer click/touch → intentando primar audio')
+      audio.play()
+        .then(() => { audio.pause(); audio.currentTime = 0; console.log('[Bell] audio primado OK') })
+        .catch((e) => console.warn('[Bell] primo fallido:', e))
       window.removeEventListener('click', unlock)
       window.removeEventListener('touchstart', unlock)
     }
@@ -140,10 +144,13 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }, [])
 
   function ringBell() {
-    if (!soundOnRef.current) return
-    if (!audioRef.current) return
+    console.log('[Bell] ringBell() → soundOnRef=', soundOnRef.current, '| audioRef=', !!audioRef.current)
+    if (!soundOnRef.current) { console.log('[Bell] MUTE activo, saliendo'); return }
+    if (!audioRef.current) { console.warn('[Bell] audioRef.current es null, saliendo'); return }
     audioRef.current.currentTime = 0
-    audioRef.current.play().catch(() => {})
+    audioRef.current.play()
+      .then(() => console.log('[Bell] play() OK'))
+      .catch((e) => console.warn('[Bell] play() rechazado:', e))
   }
 
   async function loadClock() {
@@ -155,19 +162,22 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
   }
 
   useEffect(() => {
+    console.log('[Realtime] montando canal, match.id=', match.id)
     loadData()
     loadClock()
     const channel = supabase
       .channel(`match-${match.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, () => { ringBell(); loadData() })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, () => loadData())
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_votes', filter: `match_id=eq.${match.id}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_official', filter: `match_id=eq.${match.id}` }, () => loadData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_clock', filter: `match_id=eq.${match.id}` }, () => loadClock())
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${match.id}` }, (payload) => { if (payload.new) setMatchStatus((payload.new as any).status) })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← goals INSERT', payload); ringBell(); loadData() })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← goals DELETE', payload); loadData() })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'goals', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← goals UPDATE', payload); loadData() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_votes', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← mvp_votes *', payload); loadData() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mvp_official', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← mvp_official *', payload); loadData() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_clock', filter: `match_id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← match_clock *', payload); loadClock() })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${match.id}` }, (payload) => { console.log('[Realtime] ← matches UPDATE, nuevo status=', (payload.new as any)?.status); if (payload.new) setMatchStatus((payload.new as any).status) })
+      .subscribe((status, err) => {
+        console.log('[Realtime] subscribe status=', status, err ? '| err=' + err : '')
+      })
+    return () => { console.log('[Realtime] desmontando canal, match.id=', match.id); supabase.removeChannel(channel) }
   }, [match.id])
 
   async function loadData() {
@@ -177,6 +187,7 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
       supabase.from('mvp_votes').select('id, player_id, device_id, player:players(*)').eq('match_id', match.id),
       supabase.from('mvp_official').select('*, player:players(*)').eq('match_id', match.id).single(),
     ])
+    console.log('[Data] loadData OK → goals=', g.data?.length, '| error_goals=', g.error?.message, '| error_mvp_official=', m.error?.code)
     setGoals(g.data ?? [])
     setPlayers(p.data ?? [])
     setMvpVotes(v.data ?? [])
@@ -238,8 +249,10 @@ export default function MatchView({ match, tournament, onBack, isAdmin }: Props)
 
   // Sumar gol sin asignar jugador
   async function addGoalNoPlayer(teamId: string) {
+    console.log('[Goal] addGoalNoPlayer → matchStatus=', matchStatus, '| clock?.status=', clock?.status, '| saving=', saving)
     if (saving) return
     if (matchStatus !== 'live' && clock?.status !== 'running') {
+      console.log('[Goal] BLOQUEADO: partido no iniciado')
       alert('Iniciá el cronómetro antes de marcar goles')
       return
     }
